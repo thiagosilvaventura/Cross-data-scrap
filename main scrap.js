@@ -14,14 +14,15 @@
         document.getElementById('sql-analyzer-panel').remove();
     }
 
-    // VARIÁVEIS DE ESTADO MOVIDAS PARA O TOPO (Correção do Bug)
+    // Variáveis de Estado
     let datasets = {};
     let finalResult = [];
     let currentLang = 'pt';
 
+    // Dicionário atualizado com o novo nome
     const i18n = {
-        pt: { title: "🔗 SQL Joiner Pro", step1: "1. Importar Bases (Tabelas)", noFiles: "Nenhum arquivo carregado.", filesLoaded: "{n} tabelas carregadas.", step2: "2. Relacionamento (PK / FK)", tableA: "Tabela A (Principal)", pkA: "Chave Primária (PK)", tableB: "Tabela B (Estrangeira)", fkB: "Chave Estrangeira (FK)", step3: "3. Tipo de JOIN", leftJoin: "LEFT JOIN", leftDesc: "Mantém <b>todos</b> os registros da Tabela A.", innerJoin: "INNER JOIN", innerDesc: "Mantém <b>apenas</b> registros com chaves exatas em ambas as tabelas.", fullJoin: "FULL JOIN", fullDesc: "Mantém <b>todos</b> os registros de ambas as tabelas.", runBtn: "Executar JOIN", clearBtn: "Limpar Tudo", processing: "Processando...", resultTitle: "✅ Query Executada", downloadBtn: "Baixar Tabela Resultante" },
-        en: { title: "🔗 SQL Joiner Pro", step1: "1. Import Datasets (Tables)", noFiles: "No files loaded.", filesLoaded: "{n} tables loaded.", step2: "2. Relationship (PK / FK)", tableA: "Table A (Main)", pkA: "Primary Key (PK)", tableB: "Table B (Foreign)", fkB: "Foreign Key (FK)", step3: "3. JOIN Type", leftJoin: "LEFT JOIN", leftDesc: "Keeps <b>all</b> records from Table A.", innerJoin: "INNER JOIN", innerDesc: "Keeps <b>only</b> records with exact key matches.", fullJoin: "FULL JOIN", fullDesc: "Keeps <b>all</b> records from both tables.", runBtn: "Execute JOIN", clearBtn: "Clear All", processing: "Processing...", resultTitle: "✅ Query Executed", downloadBtn: "Download Resulting Table" }
+        pt: { title: "🔗 Cross Data Scrap", step1: "1. Importar Bases (Tabelas)", noFiles: "Nenhum arquivo carregado.", filesLoaded: "{n} tabelas carregadas.", step2: "2. Relacionamento (PK / FK)", tableA: "Tabela A (Principal)", pkA: "Chave Primária (PK)", tableB: "Tabela B (Estrangeira)", fkB: "Chave Estrangeira (FK)", step3: "3. Tipo de JOIN", leftJoin: "LEFT JOIN", leftDesc: "Mantém <b>todos</b> os registros da Tabela A.", innerJoin: "INNER JOIN", innerDesc: "Mantém <b>apenas</b> registros com chaves exatas em ambas as tabelas.", fullJoin: "FULL JOIN", fullDesc: "Mantém <b>todos</b> os registros de ambas as tabelas.", runBtn: "Executar JOIN", clearBtn: "Limpar Tudo", processing: "Processando...", resultTitle: "✅ Query Executada", downloadBtn: "Baixar Tabela Resultante" },
+        en: { title: "🔗 Cross Data Scrap", step1: "1. Import Datasets (Tables)", noFiles: "No files loaded.", filesLoaded: "{n} tables loaded.", step2: "2. Relationship (PK / FK)", tableA: "Table A (Main)", pkA: "Primary Key (PK)", tableB: "Table B (Foreign)", fkB: "Foreign Key (FK)", step3: "3. JOIN Type", leftJoin: "LEFT JOIN", leftDesc: "Keeps <b>all</b> records from Table A.", innerJoin: "INNER JOIN", innerDesc: "Keeps <b>only</b> records with exact key matches.", fullJoin: "FULL JOIN", fullDesc: "Keeps <b>all</b> records from both tables.", runBtn: "Execute JOIN", clearBtn: "Clear All", processing: "Processing...", resultTitle: "✅ Query Executed", downloadBtn: "Download Resulting Table" }
     };
 
     // 2. CSS Animado
@@ -33,7 +34,7 @@
         #sql-header:active { cursor: grabbing; }
         .sql-controls button { background: none; border: none; color: #aaa; cursor: pointer; font-size: 16px; margin-left: 8px; transition: color 0.2s; }
         .sql-controls button:hover { color: #fff; }
-        #sql-body { padding: 20px; overflow-y: auto; flex: 1; }
+        #sql-body { padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; }
         .sql-section { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px; }
         .sql-title { margin: 0 0 15px 0; color: #5bc0de; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
         .sql-form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
@@ -46,6 +47,7 @@
         .sql-join-card:hover { border-color: #5bc0de; background: rgba(0,0,0,0.5); }
         .join-desc { font-size: 11px; color: #bbb; margin-top: 4px; line-height: 1.4; }
         .join-title { font-size: 13px; font-weight: bold; color: #fff; }
+        .sql-footer-credits { margin-top: auto; padding-top: 15px; text-align: center; font-size: 10px; color: rgba(255,255,255,0.2); letter-spacing: 0.5px; user-select: none; }
     `;
     document.head.appendChild(style);
 
@@ -54,7 +56,7 @@
     panel.id = 'sql-analyzer-panel';
     panel.innerHTML = `
         <div id="sql-header">
-            <h2 style="margin:0; font-size:16px; font-weight:bold;" data-i18n="title">🔗 SQL Joiner Pro</h2>
+            <h2 style="margin:0; font-size:16px; font-weight:bold;" data-i18n="title">🔗 Cross Data Scrap</h2>
             <div class="sql-controls">
                 <button id="sql-lang" title="Language">🇧🇷 PT</button>
                 <button id="sql-min" title="Minimize">_</button>
@@ -96,6 +98,8 @@
                 </div>
                 <div id="sql-output" style="margin-top:15px; font-size:13px; display:none;"></div>
             </div>
+            
+            <div class="sql-footer-credits">Created by tv</div>
         </div>
     `;
     document.body.appendChild(panel);
@@ -109,13 +113,12 @@
     document.onmousemove = (e) => { if (!isDragging) return; panel.style.left = `${initialLeft + e.clientX - startX}px`; panel.style.top = `${initialTop + e.clientY - startY}px`; };
     document.onmouseup = () => isDragging = false;
     document.getElementById('sql-close').onclick = () => panel.remove();
-    document.getElementById('sql-min').onclick = () => { if(isMinimized) { panel.style.height = cachedRect.height || 'auto'; body.style.display = 'block'; document.getElementById('sql-min').innerText = '_'; } else { cachedRect.height = panel.style.height; panel.style.height = '50px'; body.style.display = 'none'; document.getElementById('sql-min').innerText = '⎕'; } isMinimized = !isMinimized; };
+    document.getElementById('sql-min').onclick = () => { if(isMinimized) { panel.style.height = cachedRect.height || 'auto'; body.style.display = 'flex'; document.getElementById('sql-min').innerText = '_'; } else { cachedRect.height = panel.style.height; panel.style.height = '50px'; body.style.display = 'none'; document.getElementById('sql-min').innerText = '⎕'; } isMinimized = !isMinimized; };
     document.getElementById('sql-max').onclick = () => { if(isMaximized) { panel.style.width = cachedRect.width; panel.style.height = cachedRect.height; panel.style.top = cachedRect.top; panel.style.left = cachedRect.left; } else { cachedRect = { width: panel.style.width || panel.offsetWidth+'px', height: panel.style.height || panel.offsetHeight+'px', top: panel.style.top || panel.offsetTop+'px', left: panel.style.left || panel.offsetLeft+'px' }; panel.style.width = '100vw'; panel.style.height = '100vh'; panel.style.top = '0'; panel.style.left = '0'; } isMaximized = !isMaximized; };
 
     // 5. Lógica de Tradução e Estado
     const translate = () => {
         document.querySelectorAll('[data-i18n]').forEach(el => {
-            // Evita sobrescrever o texto de sucesso se arquivos já foram carregados
             if (el.id === 'file-status' && Object.keys(datasets).length > 0) return;
             el.innerHTML = i18n[currentLang][el.getAttribute('data-i18n')];
         });
