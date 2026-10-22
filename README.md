@@ -895,61 +895,7 @@ This distinction matters when calculating totals, counting entities or preparing
 
 ---
 
-## ⚠️ Limitations and Considerations
 
-The following points describe behavior visible in the current implementation, rather than hypothetical requirements for a future version.
-
-| Area | Current behavior | Consequence |
-|---|---|---|
-| Worksheet selection | Only the first worksheet of each file is read. | Other worksheets are ignored. |
-| Input validation | The interface checks for at least two selected files. | It does not comprehensively validate the file structure or schema. |
-| Key uniqueness | The selected primary key is not checked for uniqueness. | Duplicate keys in either table can multiply output records. |
-| Missing keys | Values are converted with `String(value).trim()`. | Missing values can become strings such as `"undefined"` or `"null"` and may match incorrectly. |
-| Case sensitivity | Key strings are not converted to a common case. | `"ABC"` and `"abc"` are different keys. |
-| Secondary key preservation | The selected foreign-key column is omitted from merged matches. | The result may not retain the original secondary matching field. |
-| Column collisions | Conflicting names receive a `B_` prefix in the matching branch. | Existing prefixed columns can still be overwritten. |
-| FULL JOIN tracking | Matched secondary records are tracked by key rather than by row identity. | The algorithm cannot distinguish individual secondary rows with the same key. |
-| Memory usage | The datasets, lookup map and output are held in memory. | Large workbooks may consume substantial browser memory. |
-| Error reporting | Import failures receive a generic message. | The user may need the browser console to diagnose the cause. |
-| Interface integration | Global document event properties are assigned directly. | Existing event handlers on the host page may be affected. |
-| Styling lifecycle | The panel is removed, but the injected stylesheet is not explicitly removed. | Repeated execution can leave redundant style elements. |
-| Security | File-derived column names and filenames are interpolated into HTML in several places. | Untrusted input may create HTML-injection risks in a hostile or unexpected dataset. |
-
-### Data-quality implications
-
-The normalization step deserves particular attention:
-
-```javascript
-String(value).trim()
-```
-
-It handles surrounding whitespace and allows certain number/string representations to match. However, it does not establish a canonical representation for every identifier.
-
-For example, `"00123"` and `123` become `"00123"` and `"123"` respectively, so they do not match. Depending on the business domain, that difference may be correct or may require a dedicated normalization rule.
-
-Missing values are another concern. In JavaScript, `String(undefined)` produces `"undefined"`, while `String(null)` produces `"null"`. Without explicit validation, records with missing key values can be grouped under those strings.
-
-For reliable analysis, datasets should be checked for null keys, duplicate identifiers, inconsistent data types and unexpected formatting before the join is executed.
-
-### Performance implications
-
-The lookup map avoids scanning all of Table B for each individual row of Table A. For ordinary key distributions, constructing the map and iterating through the records is approximately linear in the input size, plus the cost of emitting matching combinations.
-
-However, the output can grow substantially when a key occurs multiple times in both datasets. No lookup strategy can avoid the cost of materializing a genuinely large result when every matching combination is required.
-
-The script also keeps the original parsed records, the lookup map and the resulting records in memory during processing. It does not implement streaming, disk-backed processing, chunked imports or a dedicated large-data engine.
-
-For very large datasets, memory usage and the time required to create the final workbook should be evaluated before relying on the tool for production workloads.
-
-### Privacy and execution environment
-
-The file-reading, join and export logic is implemented in browser-side JavaScript. The source does not explicitly upload the selected datasets to an application server or send them to an external data-processing API.
-
-Nevertheless, the script loads SheetJS from a third-party CDN when the library is unavailable. This requires external network access and means the execution environment should be considered when working with confidential data.
-
-The script should only be executed on pages and in environments where its injected interface and global event handlers are appropriate.
-
----
 
 ## 🚀 Getting Started
 
@@ -1012,15 +958,14 @@ The following items are suggestions for future development; they are not impleme
 | Client-side processing | Executing the core data-processing logic in the browser rather than on an application server. |
 
 ---
+<img width="716" height="643" alt="appjoin" src="https://github.com/user-attachments/assets/3d929d96-831d-4126-87e0-17c8d32525bf" />
 
 
 <p align="center">
   <strong>Cross Data Scrap</strong>
 </p>
 
-<p align="center">
-  Relational data integration through explicit key selection, configurable joins and structured spreadsheet output.
-</p>
+
 
 <p align="center">
   <sub>JavaScript · SheetJS · Browser APIs · Relational Data Processing</sub>
